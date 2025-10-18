@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hiSHtory 历史同步服务 - Lazycat Cloud</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #5c6ac4;
+            --secondary-color: #7c83fd;
+            --success-color: #34c759;
+            --warning-color: #ff9f0a;
+            --danger-color: #ff453a;
+            --dark-color: #2d3436;
+            --light-bg: #f5f7fb;
+            --border-color: #dfe4ea;
+            --code-bg: #f3f5fc;
+            --shadow: 0 10px 30px rgba(92, 106, 196, 0.12);
+        }
+
+        body {
+            font-family: "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.7;
+            color: var(--dark-color);
+            background-color: var(--light-bg);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            position: relative;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 50px 30px;
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            margin-bottom: 40px;
+            overflow: hidden;
+        }
+
+        header h1 {
+            font-size: 2.6rem;
+            margin-bottom: 12px;
+        }
+
+        header p {
+            font-size: 1.15rem;
+            opacity: 0.95;
+        }
+
+        .lang-switch {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .lang-switch:hover {
+            background: white;
+            color: var(--primary-color);
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: var(--shadow);
+        }
+
+        .section h2 {
+            font-size: 1.9rem;
+            margin-bottom: 18px;
+            color: var(--primary-color);
+        }
+
+        .section h3 {
+            font-size: 1.35rem;
+            margin: 24px 0 12px;
+            color: var(--dark-color);
+        }
+
+        .section p {
+            margin-bottom: 12px;
+            color: #4b5563;
+        }
+
+        .section ul {
+            margin-left: 20px;
+            margin-bottom: 12px;
+            color: #4b5563;
+        }
+
+        .section li {
+            margin-bottom: 8px;
+        }
+
+        .code-block {
+            background: var(--code-bg);
+            border-radius: 10px;
+            padding: 16px;
+            margin: 12px 0 18px;
+            overflow-x: auto;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 0.92rem;
+            border: 1px solid #e0e6ff;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(92, 106, 196, 0.1);
+            color: var(--primary-color);
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .alert {
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 18px 0;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .alert span {
+            font-weight: 700;
+        }
+
+        .alert-info {
+            background: rgba(92, 106, 196, 0.08);
+            color: var(--primary-color);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .alert-success {
+            background: rgba(52, 199, 89, 0.1);
+            color: var(--success-color);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .alert-warning {
+            background: rgba(255, 159, 10, 0.1);
+            color: var(--warning-color);
+            border-left: 4px solid var(--warning-color);
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px 0;
+            color: #6b7280;
+            font-size: 0.95rem;
+        }
+
+        footer a {
+            color: var(--primary-color);
+        }
+
+        pre {
+            white-space: pre-wrap;
+        }
+
+        .lang-content {
+            display: none;
+        }
+
+        .lang-content.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 36px 24px;
+            }
+
+            header h1 {
+                font-size: 2.1rem;
+            }
+
+            .section {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div id="lang-btn" class="lang-switch" onclick="toggleLanguage()"><span id="lang-btn-text">English</span></div>
+            <h1>hiSHtory 历史同步服务</h1>
+            <p id="header-subtitle">在多台终端之间安全同步 Shell 命令历史，掌控你的终端记忆。</p>
+        </header>
+
+        <div class="content-wrapper">
+            <div id="content-zh" class="lang-content active">
+                <section class="section">
+                    <h2>项目简介</h2>
+                    <p>hiSHtory 是一款支持端到端加密的 Shell 历史同步工具。本应用基于 linuxserver.io 提供的官方容器镜像，针对 Lazycat Cloud 平台进行了封装，让你可以轻松在自建环境中跨设备共享命令历史。</p>
+                    <div class="badge">核心亮点</div>
+                    <ul>
+                        <li>跨设备历史同步，支持 macOS、Linux 及容器环境。</li>
+                        <li>端到端加密（E2EE），服务器无法读取真实命令内容。</li>
+                        <li>记录命令上下文，包括目录、主机名、返回值、执行耗时等信息。</li>
+                        <li>提供命令行查询与 `hishtory start-web-ui` 图形界面，便于检索历史。</li>
+                        <li>与 Lazycat Cloud 深度集成，快速完成应用安装和维护。</li>
+                    </ul>
+                </section>
+
+                <section class="section">
+                    <h2>客户端安装</h2>
+                    <p>在需要同步的每台机器上任选以下方式安装 hiSHtory：</p>
+                    <h3>方式一：官方安装脚本（推荐）</h3>
+                    <div class="code-block">
+                        curl https://hishtory.dev/install.py | python3 -
+                    </div>
+                    <p>脚本会自动下载二进制文件、生成密钥、并写入 Shell Hook。</p>
+                    <h3>方式二：手动下载二进制</h3>
+                    <p>访问 <a href="https://github.com/ddworken/hishtory/releases" target="_blank">GitHub Releases</a> 下载适合的压缩包，将可执行文件放入 `~/bin` 或 `/usr/local/bin`，然后执行：</p>
+                    <div class="code-block">
+                        hishtory install
+                    </div>
+                    <div class="alert alert-info">
+                        <span>提示：</span>首次安装会生成一个 Secret Key。请妥善保存，在其他设备使用 `hishtory init &lt;密钥&gt;` 加入同一同步组。
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>指向自建服务器</h2>
+                    <p>Lazycat Cloud 部署完成后，在每台设备的 `~/.zshrc` 或 `~/.bashrc` 中加入以下环境变量，并重新加载终端：</p>
+                    <div class="code-block">
+                        export HISHTORY_SERVER=https://hishtory.${LAZYCAT_BOX_NAME}.heiyu.space
+                    </div>
+                    <p>通过 `echo $HISHTORY_SERVER` 验证配置是否生效，然后执行：</p>
+                    <div class="code-block">
+                        hishtory init &lt;密钥&gt;<br>
+                        hishtory status
+                    </div>
+                    <p>确认 `Enabled: true` 且服务器地址正确，即可开始同步。</p>
+                </section>
+
+                <section class="section">
+                    <h2>常用命令</h2>
+                    <ul>
+                        <li>
+                            <strong>查看状态：</strong>
+                            <div class="code-block">hishtory status</div>
+                        </li>
+                        <li>
+                            <strong>手动同步历史：</strong>
+                            <div class="code-block">hishtory reupload</div>
+                        </li>
+                        <li>
+                            <strong>查询最近记录：</strong>
+                            <div class="code-block">hishtory query --tail 20</div>
+                        </li>
+                        <li>
+                            <strong>按主机过滤：</strong>
+                            <div class="code-block">hishtory query --host &lt;主机名&gt;</div>
+                        </li>
+                        <li>
+                            <strong>复杂条件搜索：</strong>
+                            <div class="code-block">hishtory query "docker run" hostname:production exit_code:0</div>
+                        </li>
+                        <li>
+                            <strong>时间范围查询：</strong>
+                            <div class="code-block">hishtory query deploy before:2024-01-01</div>
+                        </li>
+                        <li>
+                            <strong>启动 Web UI：</strong>
+                            <div class="code-block">hishtory start-web-ui</div>
+                            <p>命令执行后在浏览器打开提示的地址（默认 http://127.0.0.1:8000），即可图形化浏览历史。</p>
+                        </li>
+                        <li>
+                            <strong>临时关闭/开启同步：</strong>
+                            <div class="code-block">hishtory syncing disable<br>hishtory syncing enable</div>
+                        </li>
+                        <li>
+                            <strong>检查/重新注入 Hook：</strong>
+                            <div class="code-block">hishtory install</div>
+                        </li>
+                    </ul>
+                    <div class="alert alert-success">
+                        <span>小技巧：</span>在命令前输入空格可跳过记录，适合临时执行敏感指令。
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>高级配置</h2>
+                    <p>hiSHtory 支持丰富的个性化设置，可通过以下命令管理：</p>
+                    <div class="code-block">
+                        hishtory config-get<br>
+                        hishtory config-set displayed-columns Hostname CWD Command ExitCode<br>
+                        hishtory config-set timestamp-format '2006/Jan/2 15:04'<br>
+                        hishtory config-add custom-columns git_remote &#92;<br>
+                          '(git remote -v 2>/dev/null | grep origin 1>/dev/null ) && git remote get-url origin || true'<br>
+                        hishtory config-add displayed-columns git_remote<br>
+                        hishtory config-set filter-duplicate-commands true<br>
+                        hishtory config-set compact-mode true
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>验证与排查</h2>
+                    <h3>快速验证同步</h3>
+                    <ol>
+                        <li>在机器 A 执行 `echo hello-from-A`。</li>
+                        <li>运行 `hishtory reupload` 立即上传历史。</li>
+                        <li>在机器 B 执行 `hishtory query 'hello-from-A'`，若能检索到则同步成功。</li>
+                    </ol>
+                    <h3>常见问题</h3>
+                    <ul>
+                        <li><strong>历史记录停滞：</strong>确认 Shell 配置仍然 `source ~/.hishtory/config.*`，必要时重新执行 `hishtory install`。</li>
+                        <li><strong>服务器无法访问：</strong>检查网络连通性或联系 Lazycat Cloud 管理员确认服务状态。</li>
+                        <li><strong>需要离线模式：</strong>安装时在脚本后追加 `--offline`。</li>
+                        <li><strong>强制重建数据库：</strong>使用 `hishtory init --force &lt;密钥&gt;`。</li>
+                        <li><strong>查看客户端日志：</strong>运行 `tail -f ~/.hishtory/hishtory.log`。</li>
+                    </ul>
+                    <div class="alert alert-warning">
+                        <span>安全提示：</span>密钥仅保存在客户端，请妥善保管。若需要临时禁用同步，可执行 `hishtory syncing disable`。
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>致谢与参考</h2>
+                    <p>感谢 <a href="https://hishtory.dev" target="_blank">hiSHtory 官方项目</a>、<a href="https://www.linuxserver.io/" target="_blank">linuxserver.io</a> 以及 Lazycat Apps 社区提供的支持。</p>
+                    <p>更多信息可查看：</p>
+                    <ul>
+                        <li><a href="https://github.com/ddworken/hishtory" target="_blank">hiSHtory GitHub 仓库</a></li>
+                        <li><a href="https://github.com/ddworken/hishtory/releases" target="_blank">客户端下载页面</a></li>
+                        <li><a href="https://hishtory.dev" target="_blank">官方文档与公告</a></li>
+                    </ul>
+                </section>
+            </div>
+
+            <div id="content-en" class="lang-content">
+                <section class="section">
+                    <h2>Overview</h2>
+                    <p>hiSHtory is an end-to-end encrypted shell history synchronizer. This Lazycat Cloud package wraps the official linuxserver.io container so you can privately share command history across devices with minimal setup.</p>
+                    <div class="badge">Highlights</div>
+                    <ul>
+                        <li>Sync history across macOS, Linux, and container environments.</li>
+                        <li>End-to-end encryption ensures the server never sees your raw commands.</li>
+                        <li>Stores rich context such as working directory, hostname, exit code, and runtime.</li>
+                        <li>Provides both CLI search and a convenient `hishtory start-web-ui` interface.</li>
+                        <li>Optimized for Lazycat Cloud, enabling quick deployment and maintenance.</li>
+                    </ul>
+                </section>
+
+                <section class="section">
+                    <h2>Install the Client</h2>
+                    <p>Install hiSHtory on every machine that should participate in syncing:</p>
+                    <h3>Option 1: Official installer (recommended)</h3>
+                    <div class="code-block">
+                        curl https://hishtory.dev/install.py | python3 -
+                    </div>
+                    <p>The script downloads the binary, generates a secret key, and injects shell hooks automatically.</p>
+                    <h3>Option 2: Manual download</h3>
+                    <p>Visit <a href="https://github.com/ddworken/hishtory/releases" target="_blank">GitHub Releases</a>, pick the build for your OS, place the binary in your PATH, then run:</p>
+                    <div class="code-block">
+                        hishtory install
+                    </div>
+                    <div class="alert alert-info">
+                        <span>Note:</span> The first installation prints a Secret Key. Reuse it on other machines with `hishtory init &lt;secret&gt;`.
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>Point to Your Server</h2>
+                    <p>After deploying the Lazycat Cloud service, append the environment variable below to each shell profile (`~/.zshrc`, `~/.bashrc`) and reload your terminal:</p>
+                    <div class="code-block">
+                        export HISHTORY_SERVER=https://hishtory.${LAZYCAT_BOX_NAME}.heiyu.space
+                    </div>
+                    <p>Verify with `echo $HISHTORY_SERVER`, then run:</p>
+                    <div class="code-block">
+                        hishtory init &lt;secret&gt;<br>
+                        hishtory status
+                    </div>
+                    <p>When `Enabled: true` and the server URL matches, syncing is ready.</p>
+                </section>
+
+                <section class="section">
+                    <h2>Essential Commands</h2>
+                    <ul>
+                        <li>
+                            <strong>Status overview:</strong>
+                            <div class="code-block">hishtory status</div>
+                        </li>
+                        <li>
+                            <strong>Force upload:</strong>
+                            <div class="code-block">hishtory reupload</div>
+                        </li>
+                        <li>
+                            <strong>Tail latest entries:</strong>
+                            <div class="code-block">hishtory query --tail 20</div>
+                        </li>
+                        <li>
+                            <strong>Filter by host:</strong>
+                            <div class="code-block">hishtory query --host &lt;hostname&gt;</div>
+                        </li>
+                        <li>
+                            <strong>Compound searches:</strong>
+                            <div class="code-block">hishtory query "docker run" hostname:production exit_code:0</div>
+                        </li>
+                        <li>
+                            <strong>Time range filters:</strong>
+                            <div class="code-block">hishtory query deploy before:2024-01-01</div>
+                        </li>
+                        <li>
+                            <strong>Launch the Web UI:</strong>
+                            <div class="code-block">hishtory start-web-ui</div>
+                            <p>Open the prompted URL (defaults to http://127.0.0.1:8000) to explore history visually.</p>
+                        </li>
+                        <li>
+                            <strong>Toggle syncing:</strong>
+                            <div class="code-block">hishtory syncing disable<br>hishtory syncing enable</div>
+                        </li>
+                        <li>
+                            <strong>Reinstall hooks:</strong>
+                            <div class="code-block">hishtory install</div>
+                        </li>
+                    </ul>
+                    <div class="alert alert-success">
+                        <span>Tip:</span> Prefix a command with a space to skip recording sensitive operations.
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>Advanced Configuration</h2>
+                    <p>Customize hiSHtory to match your workflow:</p>
+                    <div class="code-block">
+                        hishtory config-get<br>
+                        hishtory config-set displayed-columns Hostname CWD Command ExitCode<br>
+                        hishtory config-set timestamp-format '2006/Jan/2 15:04'<br>
+                        hishtory config-add custom-columns git_remote &#92;<br>
+                          '(git remote -v 2>/dev/null | grep origin 1>/dev/null ) && git remote get-url origin || true'<br>
+                        hishtory config-add displayed-columns git_remote<br>
+                        hishtory config-set filter-duplicate-commands true<br>
+                        hishtory config-set compact-mode true
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>Validation & Troubleshooting</h2>
+                    <h3>Verify Sync</h3>
+                    <ol>
+                        <li>Run `echo hello-from-A` on machine A.</li>
+                        <li>Execute `hishtory reupload` to push entries immediately.</li>
+                        <li>On machine B run `hishtory query 'hello-from-A'`; seeing the command confirms success.</li>
+                    </ol>
+                    <h3>Common Issues</h3>
+                    <ul>
+                        <li><strong>No new entries:</strong> Ensure shell profiles still source `~/.hishtory/config.*`; rerun `hishtory install` if needed.</li>
+                        <li><strong>Server unreachable:</strong> Check network reachability or contact your Lazycat Cloud administrator.</li>
+                        <li><strong>Offline mode:</strong> Install with `--offline` to disable syncing while retaining local history.</li>
+                        <li><strong>Rebuild local DB:</strong> Use `hishtory init --force &lt;secret&gt;`.</li>
+                        <li><strong>Inspect logs:</strong> Tail `~/.hishtory/hishtory.log` for detailed error messages.</li>
+                    </ul>
+                    <div class="alert alert-warning">
+                        <span>Security:</span> Secret keys live only on clients. Disable syncing temporarily with `hishtory syncing disable` when handling sensitive work.
+                    </div>
+                </section>
+
+                <section class="section">
+                    <h2>Thanks & Resources</h2>
+                    <p>Special thanks to the <a href="https://hishtory.dev" target="_blank">hiSHtory project</a>, <a href="https://www.linuxserver.io/" target="_blank">linuxserver.io</a>, and the Lazycat Apps community.</p>
+                    <p>Additional resources:</p>
+                    <ul>
+                        <li><a href="https://github.com/ddworken/hishtory" target="_blank">hiSHtory GitHub repository</a></li>
+                        <li><a href="https://github.com/ddworken/hishtory/releases" target="_blank">Client releases</a></li>
+                        <li><a href="https://hishtory.dev" target="_blank">Official documentation</a></li>
+                    </ul>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Lazycat Apps | Powered by hiSHtory & linuxserver.io</p>
+        <p id="footer-text">如有问题或建议，欢迎反馈</p>
+    </footer>
+
+    <script>
+        let currentLang = 'zh';
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            updateLanguage();
+        }
+
+        function updateLanguage() {
+            const zhContent = document.getElementById('content-zh');
+            const enContent = document.getElementById('content-en');
+            const langBtnText = document.getElementById('lang-btn-text');
+            const headerSubtitle = document.getElementById('header-subtitle');
+            const footerText = document.getElementById('footer-text');
+
+            if (currentLang === 'zh') {
+                zhContent.classList.add('active');
+                enContent.classList.remove('active');
+                langBtnText.textContent = 'English';
+                headerSubtitle.textContent = '在多台终端之间安全同步 Shell 命令历史，掌控你的终端记忆。';
+                footerText.textContent = '如有问题或建议，欢迎反馈';
+                document.documentElement.lang = 'zh-CN';
+            } else {
+                zhContent.classList.remove('active');
+                enContent.classList.add('active');
+                langBtnText.textContent = '中文';
+                headerSubtitle.textContent = 'Securely sync shell history across devices and retain control of your terminal memory.';
+                footerText.textContent = 'For questions or suggestions, please get in touch.';
+                document.documentElement.lang = 'en';
+            }
+        }
+
+        updateLanguage();
+    </script>
+</body>
+</html>
