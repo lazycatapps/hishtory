@@ -1,7 +1,7 @@
 # app 的唯一 id,上架到商店需要保证不要冲突,尽量使用开发者自己的域名作为后缀.
 package: cloud.lazycat.app.liu.hishtory
 # app 的版本
-version: 0.335.0
+version: 0.335.0-1
 
 name: hiSHtory
 # 搜索关键词,使用逗号进行分隔
@@ -23,6 +23,13 @@ locales:
       ## 服务器部署
 
       在懒猫微服中安装本应用并启动服务，等待容器初始化完成。
+
+      ### 数据库存储
+
+      本方案默认使用 PostgreSQL 作为后端数据库，以避免 SQLite 在高并发下触发“database is locked”报错并提升多终端同步的稳定性。若先前使用 SQLite：
+
+      - 备份旧的 `/config/hishtory.db`，在每台客户端执行 `hishtory reupload` 重新上传历史；
+      - 或使用社区工具将 SQLite 数据导出后导入 PostgreSQL，再启动服务。
 
       ## 客户端安装
 
@@ -91,6 +98,13 @@ locales:
       ## Server Deployment
 
       Install this app in Lazycat Cloud and start the service.
+
+      ### Database Storage
+
+      The manifest defaults to PostgreSQL to avoid SQLite “database is locked” contention and improve reliability for multi-device sync. If you previously used SQLite:
+
+      - Back up the old `/config/hishtory.db`, then run `hishtory reupload` on each client to republish history.
+      - Or export from SQLite and import into PostgreSQL with community tooling before starting the new service.
 
       ## Client Installation
 
@@ -179,13 +193,17 @@ application:
 services:
   hishtory-server:
     # lzc-cli appstore copy-image lscr.io/linuxserver/hishtory-server:latest
+    # 说明：服务器端默认改用 PostgreSQL，避免 SQLite 并发锁 (database is locked) 问题，并提升多终端同步场景的稳定性。
+    # Note: switch to PostgreSQL to avoid SQLite concurrency locks (“database is locked”) and improve reliability for multi-device sync.
     image: registry.lazycat.cloud/liu/linuxserver/hishtory-server:12bae50b16ac83cc
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Asia/Shanghai
-      - HISHTORY_POSTGRES_DB=
-      - HISHTORY_SQLITE_DB=/config/hishtory.db
+      - HISHTORY_POSTGRES_DB=postgresql://hishtory:hishtory@postgres:5432/hishtory?sslmode=disable
+      # - HISHTORY_SQLITE_DB=/config/hishtory.db
+    depends_on:
+      - postgres
     binds:
       - /lzcapp/var/config:/config
     health_check:
@@ -193,3 +211,23 @@ services:
         - CMD-SHELL
         - curl -fsS http://127.0.0.1:8080/healthcheck || exit 1
       start_period: 30s
+  postgres:
+    # lzc-cli appstore copy-image postgres:17-alpine
+    image: registry.lazycat.cloud/liu/library/postgres:cf54e1c33a8a3b2d
+    environment:
+      - POSTGRES_DB=hishtory
+      - POSTGRES_USER=hishtory
+      - POSTGRES_PASSWORD=hishtory
+    binds:
+      - /lzcapp/var/data/postgresql:/var/lib/postgresql/data
+    health_check:
+      test:
+        - CMD-SHELL
+        - pg_isready -d hishtory -U hishtory
+      start_period: 30s
+    # 旧 SQLite 数据迁移提示：
+    # 1. 备份原 /config/hishtory.db，使用客户端运行 `hishtory reupload` 重新上传历史；
+    # 2. 或者参考社区工具，将 SQLite 导出后导入 PostgreSQL，再启动新的服务。
+    # Legacy SQLite migration tips:
+    # 1. Backup /config/hishtory.db and run `hishtory reupload` on each client to republish history.
+    # 2. Or export from SQLite and import into PostgreSQL with community tools before starting the new service.
